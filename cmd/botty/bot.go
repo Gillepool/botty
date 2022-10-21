@@ -1,10 +1,10 @@
-package botty
+package main
 
 import (
 	"fmt"
 
-	"github.com/gillepool/botty/brain"
-	"github.com/gillepool/botty/storage"
+	"github.com/gillepool/botty/internal/brain"
+	"github.com/gillepool/botty/internal/storage"
 )
 
 type Bot struct {

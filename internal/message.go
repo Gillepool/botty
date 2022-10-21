@@ -1,4 +1,4 @@
-package botty
+package message
 
 import (
 	"context"

@@ -1,4 +1,4 @@
-package botty
+package brain
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gillepool/botty/events"
+	"github.com/gillepool/botty/internal/events"
 )
 
 type Brain struct {
