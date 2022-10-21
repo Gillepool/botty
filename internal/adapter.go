@@ -1,4 +1,4 @@
-package botty
+package adapter
 
 import (
 	"bufio"
@@ -8,10 +8,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/gillepool/botty/brain"
-	"github.com/gillepool/botty/events"
-	"github.com/gillepool/botty/message"
-	"github.com/gillepool/botty/reactions"
+	"github.com/gillepool/botty/internal/brain"
+	"github.com/gillepool/botty/internal/events"
+	"github.com/gillepool/botty/internal/message"
+	"github.com/gillepool/botty/internal/reactions"
 )
 
 type Adapter interface {

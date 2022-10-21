@@ -1,6 +1,4 @@
-package botty
-
-import "github.com/gillepool/botty/reactions"
+package events
 
 type InitEvent struct{}
 
@@ -24,7 +22,6 @@ type ReceiveMessageEvent struct {
 // An Event may be emitted by a chat Adapter to indicate that a message
 // received a reaction.
 type Event struct {
-	Reaction  reactions.Reaction
 	MessageID string
 	Channel   string
 	AuthorID  string

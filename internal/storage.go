@@ -1,4 +1,4 @@
-package botty
+package storage
 
 import (
 	"encoding/json"
