@@ -11,6 +11,8 @@ import (
 	"github.com/gillepool/botty/internal/events"
 	"github.com/gillepool/botty/internal/message"
 	"github.com/gillepool/botty/internal/storage"
+	"github.com/gillepool/botty/pkg/logger"
+	"go.uber.org/zap"
 )
 
 type Bot struct {
@@ -18,11 +20,13 @@ type Bot struct {
 	Adapter adapter.Adapter
 	Brain   *brain.Brain
 	Storage *storage.Storage
+	Logger  *zap.Logger
 }
 
 func New(name string) *Bot {
 	brain := brain.NewBrain()
 	store := storage.NewStorage()
+	logger := logger.NewLogger()
 	adapter := adapter.NewCLIAdapter("Daniel")
 
 	return &Bot{
@@ -30,6 +34,7 @@ func New(name string) *Bot {
 		Brain:   brain,
 		Adapter: adapter,
 		Storage: store,
+		Logger:  logger,
 	}
 }
 
@@ -94,7 +99,14 @@ func (b *Bot) Run() error {
 
 	b.Adapter.RegisterAt(b.Brain)
 
+	b.Logger.Info("Initialize bot", zap.String("name", b.Name))
 	b.Brain.HandleEvents()
+
+	b.Logger.Info("Close storage on shutdown", zap.String("name", b.Name))
+	err := b.Storage.Close()
+	if err != nil {
+		b.Logger.Info("Error while closing memory", zap.Error(err))
+	}
 	return nil
 }
 
