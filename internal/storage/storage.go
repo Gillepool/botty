@@ -68,11 +68,12 @@ func (s *Storage) Set(key string, value interface{}) error {
 func (s *Storage) Get(key string, value interface{}) (bool, error) {
 	s.mu.RLock()
 	data, ok, err := s.memory.Get(key)
+	fmt.Println("Data ", data, ok)
 	s.mu.RUnlock()
 	if err != nil {
 		return false, fmt.Errorf("Failed to fetch value %w ", err)
 	}
-	if value == nil {
+	if !ok || value == nil {
 		return ok, nil
 	}
 

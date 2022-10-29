@@ -43,6 +43,13 @@ type shutdownRequest struct {
 // of a concrete event type.
 type eventHandler func(context.Context, reflect.Value) error
 
+func FinishEventContent(ctx context.Context) {
+	evt, _ := ctx.Value(ctxKeyEvent).(*Event)
+	if evt != nil {
+		evt.AbortEarly = true
+	}
+}
+
 func NewBrain() *Brain {
 	b := &Brain{
 		eventsInput:    make(chan Event),
@@ -119,8 +126,10 @@ func (b *Brain) registerHandler(fun interface{}) error {
 	if handlerType.Kind() != reflect.Func {
 		return errors.New("Event handler is not a function")
 	}
+	fmt.Println("handlerType", handlerType)
 
 	eventType, withContext, err := checkHandlerParams(handlerType)
+	fmt.Println("EventType", eventType)
 	if err != nil {
 		return err
 	}
@@ -137,6 +146,10 @@ func (b *Brain) registerHandler(fun interface{}) error {
 	return nil
 }
 
+func (b *Brain) Emit(event interface{}, callbacks ...func(Event)) {
+	b.eventsInput <- Event{Data: event, Callbacks: callbacks}
+}
+
 func checkHandlerParams(handlerFunc reflect.Type) (eventType reflect.Type, withContext bool, err error) {
 	numParams := handlerFunc.NumIn()
 	if numParams == 0 || numParams > 2 {
@@ -147,7 +160,7 @@ func checkHandlerParams(handlerFunc reflect.Type) (eventType reflect.Type, withC
 	withContext = numParams == 2
 
 	if withContext {
-		contextInterface := reflect.TypeOf((*context.Context)(nil))
+		contextInterface := reflect.TypeOf((*context.Context)(nil)).Elem()
 		if handlerFunc.In(1).Implements(contextInterface) {
 			err = errors.New("event handler context must be the first argument")
 			return
@@ -245,17 +258,21 @@ func (b *Brain) HandleEvents() {
 	}
 }
 
+type ctxKey string
+
+const ctxKeyEvent ctxKey = "event"
+
 func (b *Brain) handleEvent(ctx context.Context, event Event) {
 	eventData := reflect.ValueOf(event.Data)
 	_type := eventData.Type()
 	handlers := b.determineHandlers(_type)
 
-	ctx = context.WithValue(ctx, "Event", &event)
+	ctx = context.WithValue(ctx, ctxKeyEvent, &event)
 
 	for _, handler := range handlers {
 		err := b.executeEventHandler(ctx, handler, eventData)
 		if err != nil {
-			fmt.Printf("Error noob")
+			fmt.Println("Event handler failed ", err)
 		}
 
 		if event.AbortEarly {

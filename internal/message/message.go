@@ -3,6 +3,8 @@ package message
 import (
 	"context"
 	"fmt"
+
+	"github.com/gillepool/botty/internal/adapter"
 )
 
 // A Message is automatically created from a ReceiveMessageEvent and then passed
@@ -17,7 +19,7 @@ type Message struct {
 	Matches  []string    // contains all sub matches of the regular expression that matched the Text
 	Data     interface{} // corresponds to the ReceiveMessageEvent.Data field
 
-	adapter Adapter
+	Adapter adapter.Adapter
 }
 
 // Respond is a helper function to directly send a response back to the channel
@@ -35,5 +37,5 @@ func (msg *Message) RespondE(text string, args ...interface{}) error {
 		text = fmt.Sprintf(text, args...)
 	}
 
-	return msg.adapter.Send(text, msg.Channel)
+	return msg.Adapter.Send(text, msg.Channel)
 }

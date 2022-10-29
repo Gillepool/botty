@@ -10,8 +10,6 @@ import (
 
 	"github.com/gillepool/botty/internal/brain"
 	"github.com/gillepool/botty/internal/events"
-	"github.com/gillepool/botty/internal/message"
-	"github.com/gillepool/botty/internal/reactions"
 )
 
 type Adapter interface {
@@ -53,7 +51,7 @@ func (a *CLIAdapter) RegisterAt(brain *brain.Brain) {
 	go a.loop(brain)
 }
 
-func (a *CLIAdapter) loop(brain *brain.Brain) {
+func (a *CLIAdapter) loop(b *brain.Brain) {
 	input := a.readLines()
 
 	// The adapter loop is built to stay responsive even if the Brain stops
@@ -81,7 +79,8 @@ func (a *CLIAdapter) loop(brain *brain.Brain) {
 			}
 
 			lines = nil // disable this case and wait for the callback
-			brain.Emit(events.ReceiveMessageEvent{Text: msg, AuthorID: a.Author}, callbackFun)
+			a.print(msg)
+			b.Emit(events.ReceiveMessageEvent{Text: msg, AuthorID: a.Author}, callbackFun)
 
 		case <-callback:
 			// This case is executed after all ReceiveMessageEvent handlers have
@@ -132,12 +131,6 @@ func (a *CLIAdapter) readLines() <-chan string {
 // The channel argument is required by the Adapter interface but is otherwise ignored.
 func (a *CLIAdapter) Send(text, channel string) error {
 	return a.print(text + "\n")
-}
-
-// React implements the optional ReactionAwareAdapter interface by simply
-// printing the given reaction as UTF8 emoji to the CLI.
-func (a *CLIAdapter) React(r reactions.Reaction, _ message.Message) error {
-	return a.print(r.String() + "\n")
 }
 
 // Close makes the CLIAdapter stop emitting any new events or printing any output.
