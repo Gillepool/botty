@@ -44,9 +44,6 @@ func NewDiscordAdapter(name string, logger *zap.Logger) (*DiscordAdapter, error)
 
 	discordAdapter.Client.Open()
 
-	// We need to translate the RTMEvent channel into the more generic slackEvent
-	// channel which is used by the BotAdapter internally.
-	// Register the messageCreate func as a callback for MessageCreate events.
 	discordAdapter.Client.AddHandler(func(s *discordgo.Session, m *discordgo.MessageCreate) {
 		events <- discordEvent{
 			Message: *m.Message,
@@ -81,7 +78,7 @@ func (a *DiscordAdapter) RegisterAt(brain *brain.Brain) {
 
 // Send implemenation sends all text messages to given ChannelID
 func (a *DiscordAdapter) Send(text, channelID string) error {
-	a.logger.Info("Sending message to channel", zap.String("channel_id", channelID))
+	a.logger.Info("Sending message to channel", zap.String("text", text))
 	_, err := a.Client.ChannelMessageSend(channelID, text)
 	return err
 }

@@ -10,9 +10,12 @@ import (
 	"time"
 
 	"github.com/gillepool/botty/internal/events"
+	"go.uber.org/zap"
 )
 
 type Brain struct {
+	logger *zap.Logger
+
 	eventsInput chan Event // input for any new events, the Brain ensures that callers never block when writing to it
 	eventsLoop  chan Event // used in Brain.HandleEvents() to actually process the events
 	shutdown    chan shutdownRequest
@@ -50,8 +53,13 @@ func FinishEventContent(ctx context.Context) {
 	}
 }
 
-func NewBrain() *Brain {
+func NewBrain(logger *zap.Logger) *Brain {
+	if logger == nil {
+		logger = zap.NewNop()
+	}
+
 	b := &Brain{
+		logger:         logger,
 		eventsInput:    make(chan Event),
 		eventsLoop:     make(chan Event),
 		shutdown:       make(chan shutdownRequest),
@@ -126,10 +134,8 @@ func (b *Brain) registerHandler(fun interface{}) error {
 	if handlerType.Kind() != reflect.Func {
 		return errors.New("Event handler is not a function")
 	}
-	fmt.Println("handlerType", handlerType)
 
 	eventType, withContext, err := checkHandlerParams(handlerType)
-	fmt.Println("EventType", eventType)
 	if err != nil {
 		return err
 	}
@@ -243,6 +249,7 @@ func (b *Brain) HandleEvents() {
 				return
 			}
 
+			b.logger.Info("Handle event")
 			b.handleEvent(ctx, evt)
 
 		case shutdown = <-b.shutdown:
@@ -265,6 +272,8 @@ const ctxKeyEvent ctxKey = "event"
 func (b *Brain) handleEvent(ctx context.Context, event Event) {
 	eventData := reflect.ValueOf(event.Data)
 	_type := eventData.Type()
+	b.logger.Info("eventData", zap.Any("type", _type))
+
 	handlers := b.determineHandlers(_type)
 
 	ctx = context.WithValue(ctx, ctxKeyEvent, &event)
@@ -272,7 +281,7 @@ func (b *Brain) handleEvent(ctx context.Context, event Event) {
 	for _, handler := range handlers {
 		err := b.executeEventHandler(ctx, handler, eventData)
 		if err != nil {
-			fmt.Println("Event handler failed ", err)
+			b.logger.Error("Event handler failed", zap.Error(err))
 		}
 
 		if event.AbortEarly {

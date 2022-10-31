@@ -4,10 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap/zaptest"
 )
 
 func TestStorageGet(t *testing.T) {
-	store := NewStorage()
+	logger := zaptest.NewLogger(t)
+	store := NewStorage(logger)
 
 	ok, err := store.Get("test", nil)
 
@@ -16,7 +18,8 @@ func TestStorageGet(t *testing.T) {
 }
 
 func TestStorageSet(t *testing.T) {
-	store := NewStorage()
+	logger := zaptest.NewLogger(t)
+	store := NewStorage(logger)
 
 	expected := "result"
 	err := store.Set("key", expected)

@@ -5,18 +5,18 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 type Storage struct {
+	logger  *zap.Logger
 	mu      sync.RWMutex
 	memory  Memory
 	encoder MemoryEncoder
 }
 
 // The Memory interface allows the bot to persist data as key-value pairs.
-// The default implementation of the Memory is to store all keys and values in
-// a map (i.e. in-memory). Other implementations typically offer actual long term
-// persistence into a file or to redis.
 type Memory interface {
 	Set(key string, value []byte) error
 	Get(key string) ([]byte, bool, error)
@@ -39,8 +39,9 @@ type inMemory struct {
 
 type jsonEncoder struct{}
 
-func NewStorage() *Storage {
+func NewStorage(logger *zap.Logger) *Storage {
 	return &Storage{
+		logger:  logger,
 		memory:  newInMemory(),
 		encoder: new(jsonEncoder),
 	}
