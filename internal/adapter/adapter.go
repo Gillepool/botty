@@ -39,10 +39,8 @@ func NewCLIAdapter(name string) *CLIAdapter {
 	}
 }
 
-// RegisterAt starts the CLIAdapter by reading messages from stdin and emitting
-// a ReceiveMessageEvent for each of them. Additionally the adapter hooks into
-// the InitEvent to print a nice prefix to stdout to show to the user it is
-// ready to accept input.
+// RegisterAt starts the Adapter by reading messages from stdin and emitting
+// a ReceiveMessageEvent for each of them.
 func (a *CLIAdapter) RegisterAt(brain *brain.Brain) {
 	brain.RegisterHandler(func(evt events.InitEvent) {
 		_ = a.print(a.Prefix)
@@ -54,14 +52,6 @@ func (a *CLIAdapter) RegisterAt(brain *brain.Brain) {
 func (a *CLIAdapter) loop(b *brain.Brain) {
 	input := a.readLines()
 
-	// The adapter loop is built to stay responsive even if the Brain stops
-	// processing events so we can safely close the CLIAdapter.
-	//
-	// We want to print the prefix each time when the Brain has completely
-	// processed a ReceiveMessageEvent and before we are emitting the next one.
-	// This gives us a shell-like behavior which signals to the user that she
-	// can input more data on the CLI. This channel is buffered so we do not
-	// block the Brain when it executes the callback.
 	callback := make(chan brain.Event, 1)
 	callbackFun := func(evt brain.Event) {
 		callback <- evt

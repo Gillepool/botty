@@ -23,9 +23,9 @@ type discordEvent struct {
 
 // NewCLIAdapter creates a new CLIAdapter. The caller must call Close
 // to make the CLIAdapter stop reading messages and emitting events.
-func NewDiscordAdapter(name string, logger *zap.Logger) (*DiscordAdapter, error) {
+func NewDiscordAdapter(name, token string, logger *zap.Logger) (*DiscordAdapter, error) {
 	// Create a new Discord session using the provided bot token.
-	client, err := discordgo.New("Bot " + "MTAzNTkxMzAyMTc5ODc1MjM4Ng.Go7_Uq.4hEedWV6lD_hxmbAelK5wiIJbhCvHekFxQsjpU")
+	client, err := discordgo.New("Bot " + token)
 	if err != nil {
 		return nil, err
 	}

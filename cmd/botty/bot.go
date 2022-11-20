@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 
@@ -24,11 +25,18 @@ type Bot struct {
 }
 
 func New(name string) *Bot {
-	brain := brain.NewBrain()
-	store := storage.NewStorage()
 	logger := logger.NewLogger()
-	adapter := adapter.NewCLIAdapter("Daniel")
+	store := storage.NewStorage(logger.Named("Storage"))
 
+	// Should read the address from config instead
+	storage.NewRedisStorage(storage.Config{
+		Addr: os.Getenv("redis_addr"),
+	})
+	brain := brain.NewBrain(logger.Named("Brain"))
+
+	adapter, _ := adapter.NewDiscordAdapter("Daniel", os.Getenv("discord_token"), logger.Named("Discord"))
+
+	logger.Info("Storaged used: ", zap.Any("Storage", store))
 	return &Bot{
 		Name:    name,
 		Brain:   brain,
@@ -39,6 +47,7 @@ func New(name string) *Bot {
 }
 
 func (b *Bot) Respond(msg string, fun func(message.Message) error) {
+	b.Logger.Info("Response to", zap.String("message", msg))
 	expr := "^" + msg + "$"
 	b.RespondRegexp(expr, fun)
 }
@@ -121,6 +130,7 @@ func main() {
 }
 
 func (b *ExampleBot) Remember(msg message.Message) error {
+	b.Logger.Info("Remember command")
 	key, value := msg.Matches[0], msg.Matches[1]
 	msg.Respond("Ok I'll remember %s is %s", key, value)
 	return b.Storage.Set(key, value)

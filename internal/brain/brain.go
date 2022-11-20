@@ -241,23 +241,14 @@ func (b *Brain) HandleEvents() {
 		select {
 		case evt, ok := <-b.eventsLoop:
 			if !ok {
-				// Brain.consumeEvents() is done processing all remaining events
-				// and we can now safely shutdown the event handler, knowing that
-				// all pending events have been processed.
+
 				b.handleEvent(ctx, Event{Data: events.ShutdownEvent{}})
 				shutdown.callback <- true
 				return
 			}
-
-			b.logger.Info("Handle event")
 			b.handleEvent(ctx, evt)
 
 		case shutdown = <-b.shutdown:
-			// The Brain is shutting down. We have to close the input channel so
-			// we doe no longer accept new events and only process the remaining
-			// pending events. When the goroutine of Brain.consumeEvents() is
-			// done it will close the events loop channel and the case above will
-			// use the shutdown callback and return from this function.
 			ctx = shutdown.ctx
 			close(b.eventsInput)
 			atomic.StoreInt32(&b.handlingEvents, 0)
@@ -285,9 +276,6 @@ func (b *Brain) handleEvent(ctx context.Context, event Event) {
 		}
 
 		if event.AbortEarly {
-			// Abort handler execution early instead of running any more
-			// handlers. The event state may have been changed by a handler, e.g.
-			// using the FinishEventContent(…) function.
 			break
 		}
 	}
